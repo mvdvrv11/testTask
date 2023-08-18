@@ -32,7 +32,7 @@ func main() {
 	r.POST("/get_tokens", GetTokens)
 	r.POST("/refresh_token", RefreshToken)
 
-	// Запуск сервера
+	// Запуск сервака
 	r.Run(":8080")
 }
 
@@ -40,9 +40,40 @@ func GetTokens(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 
-	// Здесь нужно добавить код для проверки учетных данных в базе данных (MongoDB)
+	// Нужен код для проверки учетных данных в базе данных (MongoDB) сгенерировал пример кода с помощью ИИ.
 
-	// В случае успешной аутентификации, создаем Access и Refresh токены
+// Подключение к базе данных
+const url = 'mongodb://localhost:27017';
+const dbName = 'mydb';
+
+MongoClient.connect(url, { useUnifiedTopology: true }, (err, client) => {
+  if (err) {
+    console.error('Ошибка подключения к базе данных:', err);
+    return;
+  }
+
+  const db = client.db(dbName);
+  const collection = db.collection('users');
+
+  // Проверка наличия учетных данных
+  collection.find({ username: 'example' }).toArray((err, result) => {
+    if (err) {
+      console.error('Ошибка при выполнении запроса:', err);
+      return;
+    }
+
+    if (result.length > 0) {
+      console.log('Учетные данные найдены');
+    } else {
+      console.log('Учетные данные не найдены');
+    }
+
+    // Закрытие подключения к базе данных
+    client.close();
+  });
+});
+
+	// При успешной аутентификации, создаем Access и Refresh токены
 	accessToken, err := createAccessToken(username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error creating access token"})
@@ -61,9 +92,41 @@ func GetTokens(c *gin.Context) {
 func RefreshToken(c *gin.Context) {
 	refreshToken := c.PostForm("refresh_token")
 
-	// Здесь нужно добавить код для проверки Refresh токена в базе данных (MongoDB)
+	// нужен код для проверки Refresh токена в базе данных (MongoDB). Тоже сгенерировал с помощью ИИ
+	const MongoClient = require('mongodb').MongoClient;
 
-	// В случае успешной проверки, создаем новый Access токен
+// Подключение к базе данных
+const url = 'mongodb://localhost:27017';
+const dbName = 'mydb';
+
+MongoClient.connect(url, { useUnifiedTopology: true }, (err, client) => {
+  if (err) {
+    console.error('Ошибка подключения к базе данных:', err);
+    return;
+  }
+
+  const db = client.db(dbName);
+  const collection = db.collection('tokens');
+
+  // Проверка наличия Refresh токена
+  collection.find({ refreshToken: 'example' }).toArray((err, result) => {
+    if (err) {
+      console.error('Ошибка при выполнении запроса:', err);
+      return;
+    }
+
+    if (result.length > 0) {
+      console.log('Refresh токен найден');
+    } else {
+      console.log('Refresh токен не найден');
+    }
+
+    // Закрытие подключения к базе данных
+    client.close();
+  });
+});
+
+	// При успешной проверке, создаем новый Access токен
 	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
 		return refreshSecret, nil
 	})
@@ -113,7 +176,43 @@ func createRefreshToken(username string) (string, error) {
 		return "", err
 	}
 
-	// Здесь нужно добавить код для сохранения хеша Refresh токена в базу данных (MongoDB)
+	//нужен код для сохранения хеша Refresh токена в базу данных (MongoDB). Ну и в 3й раз тоже ИИ.
+const MongoClient = require('mongodb').MongoClient;
+const bcrypt = require('bcrypt');
 
+// Подключение к базе данных
+const url = 'mongodb://localhost:27017';
+const dbName = 'mydb';
+
+MongoClient.connect(url, { useUnifiedTopology: true }, (err, client) => {
+  if (err) {
+    console.error('Ошибка подключения к базе данных:', err);
+    return;
+  }
+
+  const db = client.db(dbName);
+  const collection = db.collection('tokens');
+
+  // Хеширование Refresh токена
+  const refreshToken = 'example';
+  bcrypt.hash(refreshToken, 10, (err, hash) => {
+    if (err) {
+      console.error('Ошибка при хешировании токена:', err);
+      return;
+    }
+
+    // Сохранение хеша Refresh токена в базе данных
+    collection.insertOne({ refreshToken: hash }, (err, result) => {
+      if (err) {
+        console.error('Ошибка при сохранении хеша токена:', err);
 	return refreshToken, nil
-}
+} return;
+      }
+
+      console.log('Хеш Refresh токена успешно сохранен в базе данных');
+
+      // Закрытие подключения к базе данных
+      client.close();
+    });
+  });
+});
