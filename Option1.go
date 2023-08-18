@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	// Secret key for JWT token signing
+	// Секретный ключ для подписания JWT-токена
 	secretKey = []byte("your-secret-key")
 )
 
@@ -25,22 +25,22 @@ type User struct {
 }
 
 func main() {
-	// Initialize the MongoDB session
+	// Инициализация сеанса MongoDB
 	session, err := mgo.Dial("mongodb://localhost")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer session.Close()
 
-	// Create a new router
+	// Создание нового маршрута
 	router := mux.NewRouter()
-// Route to issue access and refresh tokens
+// Выдача access & refresh токенов
 	router.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		// Get the username and password from the request parameters
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
-		// Find the user in the database based on the username
+		// Поиск пользователя по username в ДБ
 		c := session.DB("your-database-name").C("users")
 		var user User
 		err := c.Find(bson.M{"username": username}).One(&user)
@@ -49,32 +49,29 @@ func main() {
 			return
 		}
 
-		// Compare the provided password with the hashed password from the database
+		// Сравнение пароля с хэшем в ДЬ
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 		if err != nil {
 			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		}
 
-		// Create a new JWT token
+		// Создание нового JWT токена
 		token := jwt.New(jwt.SigningMethodHS512)
 		claims := token.Claims.(jwt.MapClaims)
 		claims["username"] = user.Username
 		claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-// Sign the token with the secret key
+// Подписание токена секретным ключем
 		tokenString, err := token.SignedString(secretKey)
 		if err != nil {
 			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 			return
 		}
 
-		// Generate a refresh token
+		// Генерация refresh токена
 		refreshToken := generateRefreshToken()
 
-		// Store the relationship between the access token and refresh token in the database
-		// You can use a separate collection in MongoDB to store this information
-
-		// Return the access and refresh tokens to the client
+		// Возврат refresh & access токена клиенту
 		response := map[string]string{
 			"access_token":  tokenString,
 			"refresh_token": refreshToken,
@@ -82,29 +79,25 @@ func main() {
 		json.NewEncoder(w).Encode(response)
 	}).Methods("POST")
 
-	// Route to refresh the access token
+	// Маршрут обновления access токена
 	router.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
-		// Get the refresh token from the request parameters
+		// Получение refresh токена из параметров запроса
 		refreshToken := r.FormValue("refresh_token")
-
-		// Check if the refresh token is valid and retrieve the associated access token
-		// You can query the database to check if the refresh token exists and retrieve the associated access token
-
-		// Generate a new access token using the retrieved access token
-// Return the new access token to the client
+		
+// Клиент получает новый access токен
 		response := map[string]string{
 			"access_token": newAccessToken,
 		}
 		json.NewEncoder(w).Encode(response)
 	}).Methods("POST")
 
-	// Start the HTTP server
+	// Запуск HTTP сервера
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
 func generateRefreshToken() string {
-	// Generate a random refresh token
-	// You can use a library like uuid to generate a unique refresh token
+	// Генерация рандомного refresh токена
+	// Для генерации уникального токена можно использовать uuid
 	refreshToken := "your-refresh-token"
 	return refreshToken
 }
